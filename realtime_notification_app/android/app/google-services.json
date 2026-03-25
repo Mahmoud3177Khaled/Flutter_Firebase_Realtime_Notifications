@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "623176519669",
+    "project_id": "realtime-notification-app",
+    "storage_bucket": "realtime-notification-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:623176519669:android:a1b0f3ffc98036e1e6dabc",
+        "android_client_info": {
+          "package_name": "com.example.realtime_notification_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgNixg9QozQefuRoQ0CISydWisY41fUEM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
