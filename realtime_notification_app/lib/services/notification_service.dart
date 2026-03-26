@@ -3,57 +3,51 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:notification_inbox_app/models/notification_model.dart';
 
 class NotificationService {
-  static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-  static final FirebaseDatabase _database = FirebaseDatabase.instance;
+  static final FirebaseMessaging messaging = FirebaseMessaging.instance;
+  static final FirebaseDatabase db = FirebaseDatabase.instance;
 
-  static String _normalizeUsername(String username) {
-    return "user_${username.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '')}";
+  static String normalizeUsername(String username) {
+    return "user_${username.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '')}";  //regex to remove all whitespace (helped with ai)
   }
 
   static Future<void> subscribeToTopic(String username) async {
-    String topic = _normalizeUsername(username);
-    await _messaging.subscribeToTopic(topic);
-    print("✅ Subscribed to topic: $topic");
+
+    String topic = normalizeUsername(username);
+    await messaging.subscribeToTopic(topic);
+    // print("subscribed to topic $topic");
   }
 
   static Future<void> unsubscribeFromTopic(String username) async {
-    String topic = _normalizeUsername(username);
-    await _messaging.unsubscribeFromTopic(topic);
-    print("✅ Unsubscribed from topic: $topic");
+    String topic = normalizeUsername(username);
+    await messaging.unsubscribeFromTopic(topic);
+    // print("unsubscribed from topic $topic");
   }
 
   static Future<void> saveNotification(String username, RemoteMessage message) async {
+
     try {
-      String topic = _normalizeUsername(username);
+      String topic = normalizeUsername(username);
 
-      String title = message.notification?.title ??
-          message.data['title'] ??
-          message.data['notification_title'] ??
-          'No Title';
-
-      String body = message.notification?.body ??
-          message.data['body'] ??
-          message.data['notification_body'] ??
-          'No Body';
-
+      // create notification model
       final notification = AppNotification(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: title,
-        body: body,
+        title: message.notification?.title ?? 'No Title',
+        body: message.notification?.body ?? 'no body',
         receivedAt: DateTime.now().millisecondsSinceEpoch,
       );
 
-      final ref = _database.ref('notifications/$topic').push();
-      await ref.set(notification.toMap());
+      //save notification as map
+      final dbref = db.ref('notifications/$topic').push();
+      await dbref.set(notification.toMap());
 
-      print("✅ SUCCESS: Notification SAVED → $topic");
+      // print("Notification saved in $topic");
     } catch (e) {
-      print("❌ ERROR saving notification: $e");
+      // print("error saving notification: $e");
     }
   }
 
   static DatabaseReference getNotificationsRef(String username) {
-    String topic = _normalizeUsername(username);
-    return _database.ref('notifications/$topic');
+    String topic = normalizeUsername(username);
+    return db.ref('notifications/$topic');
   }
 }

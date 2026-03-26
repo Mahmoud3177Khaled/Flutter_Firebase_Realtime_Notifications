@@ -8,7 +8,6 @@ import 'package:intl/intl.dart';
 import 'package:notification_inbox_app/models/notification_model.dart';
 import 'package:notification_inbox_app/screens/login_screen.dart';
 import 'package:notification_inbox_app/services/notification_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   final String username;
@@ -22,42 +21,49 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final RxList<AppNotification> notifications = <AppNotification>[].obs;
 
-  StreamSubscription<RemoteMessage>? _messageSubscription;
+  StreamSubscription<RemoteMessage>? messageSubscription;
 
   @override
   void initState() {
     super.initState();
-    _setupMessaging();
-    _loadNotifications();
+    setupMessaging();
+    loadNotifications();
   }
 
-  Future<void> _setupMessaging() async {
+  Future<void> setupMessaging() async {
     await FirebaseMessaging.instance.requestPermission();
 
-    // Subscribe to current user's topic
+    //subscribe to topic
     await NotificationService.subscribeToTopic(widget.username);
 
-    // Listen to foreground messages → Only save for current user
-    _messageSubscription = FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      print("Foreground notification received for ${widget.username}");
+    //listen for foreground notifications
+    messageSubscription = FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      // print("Foreground notification received for ${widget.username}");
 
-      // Save only for the current logged-in user
+      //save when recieved
       await NotificationService.saveNotification(widget.username, message);
 
-      _loadNotifications();
+      //reload
+      loadNotifications();
 
+      //in app notification
       Get.snackbar(
         message.notification?.title ?? 'New Notification',
         message.notification?.body ?? '',
         snackPosition: SnackPosition.TOP,
       );
+
     });
   }
 
-  void _loadNotifications() {
+  void loadNotifications() {
+
+    //listener for new notification for this user
     final ref = NotificationService.getNotificationsRef(widget.username);
 
+    // load old notification, and listen for more
     ref.onValue.listen((DatabaseEvent event) {
+
       final data = event.snapshot.value;
       if (data == null) {
         notifications.clear();
@@ -65,30 +71,30 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       final List<AppNotification> loaded = [];
+
+      //populate the AppNotification list
       (data as Map).forEach((key, value) {
         loaded.add(AppNotification.fromMap(key, value));
       });
 
       loaded.sort((a, b) => b.receivedAt.compareTo(a.receivedAt));
       notifications.assignAll(loaded);
+
     });
   }
 
-  Future<void> _logout() async {
-    // Cancel the listener before logout
-    _messageSubscription?.cancel();
-
+  Future<void> logout() async {
+    //remove topic subscribtion
+    messageSubscription?.cancel();
     await NotificationService.unsubscribeFromTopic(widget.username);
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('username');
 
     Get.offAll(() => LoginScreen());
   }
 
   @override
   void dispose() {
-    _messageSubscription?.cancel();
+    // make sure subscribtion is cancelled
+    messageSubscription?.cancel();
     super.dispose();
   }
 
@@ -100,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text('Inbox - ${widget.username}'),
         actions: [
-          IconButton(icon: const Icon(Icons.logout), onPressed: _logout),
+          IconButton(icon: const Icon(Icons.logout), onPressed: logout),
         ],
       ),
       body: Obx(() => notifications.isEmpty

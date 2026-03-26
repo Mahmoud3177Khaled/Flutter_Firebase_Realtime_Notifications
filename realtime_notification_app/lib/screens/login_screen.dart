@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   LoginScreen({super.key});
 
-  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController usernameController = TextEditingController();
 
-  Future<void> _login() async {
-    String username = _usernameController.text.trim();
+  Future<void> login() async {
+
+    String username = usernameController.text.trim();
 
     if (username.isEmpty) {
       Get.snackbar('Error', 'Please enter a username', snackPosition: SnackPosition.TOP);
       return;
     }
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('username', username);
 
     Get.off(() => HomeScreen(username: username));   // GetX navigation
   }
@@ -36,7 +33,7 @@ class LoginScreen extends StatelessWidget {
             const Text('Enter your username to start', style: TextStyle(fontSize: 20)),
             const SizedBox(height: 20),
             TextField(
-              controller: _usernameController,
+              controller: usernameController,
               decoration: const InputDecoration(
                 labelText: 'Username',
                 border: OutlineInputBorder(),
@@ -44,7 +41,7 @@ class LoginScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _login,
+              onPressed: login,
               child: const Text('Login'),
             ),
           ],
