@@ -16,6 +16,7 @@ dependencies:
   shared_preferences: ^2.3.0     # To save username locally
 
   intl: ^0.19.0                  # For formatting timestamp
+  get: ^4.7.3
 
 dev_dependencies:
   flutter_test:

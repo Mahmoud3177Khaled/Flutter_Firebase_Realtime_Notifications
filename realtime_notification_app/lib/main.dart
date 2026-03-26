@@ -1,14 +1,13 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  print("📩 Background message received: ${message.notification?.title}");
-  // We will handle saving to DB from foreground for simplicity.
-  // You can extend it later if needed.
+  print("Background message: ${message.notification?.title}");
 }
 
 void main() async {
@@ -25,11 +24,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       title: 'Notification Inbox',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.deepPurple),
-      home: const LoginScreen(),
+      home: LoginScreen(),
     );
   }
 }

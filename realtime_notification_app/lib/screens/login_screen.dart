@@ -1,33 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:notification_inbox_app/screens/home_screen.dart';
+import 'home_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class LoginScreen extends StatelessWidget {
+  LoginScreen({super.key});
 
-  @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
 
   Future<void> _login() async {
     String username = _usernameController.text.trim();
+
     if (username.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a username')),
-      );
+      Get.snackbar('Error', 'Please enter a username', snackPosition: SnackPosition.TOP);
       return;
     }
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('username', username);
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => HomeScreen(username: username)),
-    );
+    Get.off(() => HomeScreen(username: username));   // GetX navigation
   }
 
   @override
@@ -41,10 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             const Icon(Icons.notifications_active, size: 100, color: Colors.deepPurple),
             const SizedBox(height: 30),
-            const Text(
-              'Enter your username to start',
-              style: TextStyle(fontSize: 20),
-            ),
+            const Text('Enter your username to start', style: TextStyle(fontSize: 20)),
             const SizedBox(height: 20),
             TextField(
               controller: _usernameController,

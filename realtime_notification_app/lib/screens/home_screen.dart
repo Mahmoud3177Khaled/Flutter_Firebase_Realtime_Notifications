@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:notification_inbox_app/models/notification_model.dart';
 import 'package:notification_inbox_app/screens/login_screen.dart';
@@ -17,8 +20,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<AppNotification> _notifications = [];
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  final RxList<AppNotification> notifications = <AppNotification>[].obs;
+
+  StreamSubscription<RemoteMessage>? _messageSubscription;
 
   @override
   void initState() {
@@ -28,28 +32,25 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _setupMessaging() async {
-    // Request permission
-    await _messaging.requestPermission();
+    await FirebaseMessaging.instance.requestPermission();
 
-    // Subscribe to topic
+    // Subscribe to current user's topic
     await NotificationService.subscribeToTopic(widget.username);
 
-    // Foreground messages
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      print("Foreground notification received");
+    // Listen to foreground messages → Only save for current user
+    _messageSubscription = FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      print("Foreground notification received for ${widget.username}");
+
+      // Save only for the current logged-in user
       await NotificationService.saveNotification(widget.username, message);
 
-      // Refresh list
       _loadNotifications();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message.notification?.title ?? 'New Notification')),
+      Get.snackbar(
+        message.notification?.title ?? 'New Notification',
+        message.notification?.body ?? '',
+        snackPosition: SnackPosition.TOP,
       );
-    });
-
-    // When notification is tapped (app in background)
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      _loadNotifications();
     });
   }
 
@@ -59,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ref.onValue.listen((DatabaseEvent event) {
       final data = event.snapshot.value;
       if (data == null) {
-        setState(() => _notifications = []);
+        notifications.clear();
         return;
       }
 
@@ -68,25 +69,27 @@ class _HomeScreenState extends State<HomeScreen> {
         loaded.add(AppNotification.fromMap(key, value));
       });
 
-      // Sort by received time (newest first)
       loaded.sort((a, b) => b.receivedAt.compareTo(a.receivedAt));
-
-      setState(() => _notifications = loaded);
+      notifications.assignAll(loaded);
     });
   }
 
   Future<void> _logout() async {
+    // Cancel the listener before logout
+    _messageSubscription?.cancel();
+
     await NotificationService.unsubscribeFromTopic(widget.username);
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('username');
 
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-    }
+    Get.offAll(() => LoginScreen());
+  }
+
+  @override
+  void dispose() {
+    _messageSubscription?.cancel();
+    super.dispose();
   }
 
   @override
@@ -97,14 +100,10 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text('Inbox - ${widget.username}'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
-            tooltip: 'Logout',
-          ),
+          IconButton(icon: const Icon(Icons.logout), onPressed: _logout),
         ],
       ),
-      body: _notifications.isEmpty
+      body: Obx(() => notifications.isEmpty
           ? const Center(
               child: Text(
                 'No notifications yet.\nSend one from Firebase Console!',
@@ -112,17 +111,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             )
           : ListView.builder(
-              itemCount: _notifications.length,
+              itemCount: notifications.length,
               itemBuilder: (context, index) {
-                final notif = _notifications[index];
+                final notif = notifications[index];
                 return Card(
                   margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: ListTile(
                     leading: const Icon(Icons.notifications, color: Colors.deepPurple),
-                    title: Text(
-                      notif.title,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    title: Text(notif.title, style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text(notif.body),
                     trailing: Text(
                       dateFormat.format(DateTime.fromMillisecondsSinceEpoch(notif.receivedAt)),
@@ -131,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 );
               },
-            ),
+            )),
     );
   }
 }
