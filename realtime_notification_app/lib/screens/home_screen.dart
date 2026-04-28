@@ -106,8 +106,13 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text('Inbox - ${widget.username}'),
         actions: [
-          IconButton(icon: const Icon(Icons.logout), onPressed: logout),
-        ],
+        IconButton(
+          icon: const Icon(Icons.history),
+          onPressed: () => Get.toNamed('/history'),
+          tooltip: 'All Notifications History',
+        ),
+        IconButton(icon: const Icon(Icons.logout), onPressed: logout),
+      ],
       ),
       body: Obx(() => notifications.isEmpty
           ? const Center(

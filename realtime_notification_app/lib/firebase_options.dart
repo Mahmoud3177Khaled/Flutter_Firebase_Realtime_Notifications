@@ -48,6 +48,7 @@ class DefaultFirebaseOptions {
     authDomain: 'realtime-notification-app.firebaseapp.com',
     storageBucket: 'realtime-notification-app.firebasestorage.app',
     measurementId: 'G-MXT3KMY2VX',
+    databaseURL: 'https://realtime-notification-app-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -56,6 +57,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '623176519669',
     projectId: 'realtime-notification-app',
     storageBucket: 'realtime-notification-app.firebasestorage.app',
+    databaseURL: 'https://realtime-notification-app-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -65,6 +67,7 @@ class DefaultFirebaseOptions {
     projectId: 'realtime-notification-app',
     storageBucket: 'realtime-notification-app.firebasestorage.app',
     iosBundleId: 'com.example.realtimeNotificationApp',
+    databaseURL: 'https://realtime-notification-app-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
