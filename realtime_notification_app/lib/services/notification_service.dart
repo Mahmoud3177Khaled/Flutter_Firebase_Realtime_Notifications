@@ -22,14 +22,14 @@ class NotificationService {
     await messaging.subscribeToTopic(topic);
   }
 
-  //i skipped unsubscribeFromTopic because its not supported on web, so i limmited calling it to when the app is build on android;
+  //i skipped unsubscribeFromTopic because its not supported on web, so i limited calling it to when the app is build on android;
   static Future<void> unsubscribeFromTopic(String username) async {
     if (kIsWeb) {
       return;
     }
 
     String topic = normalizeUsername(username);
-    // await messaging.unsubscribeFromTopic(topic);
+    await messaging.unsubscribeFromTopic(topic);
   }
 
   static Future<void> saveNotification(String username, RemoteMessage message) async {
